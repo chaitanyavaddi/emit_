@@ -1,0 +1,6 @@
+<!-- Out-of-band swap: remove the table row and clear details pane -->
+<div id="row-{{ user.id }}" hx-swap-oob="outerHTML"></div>
+<div id="detail-pane" hx-swap-oob="innerHTML"></div>
+
+<!-- Also update counts via OOB swap -->
+{% include '_counts.html' %}

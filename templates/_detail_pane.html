@@ -1,0 +1,45 @@
+<div class="profile-card">
+  <div class="profile-header">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div class="avatar">{{ user.email[0]|upper }}</div>
+      <div>
+        <div style="font-weight:700">{{ user.email }}</div>
+        <div class="muted">ID: {{ user.id }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="profile-body">
+    <form hx-post="/ui/user/{{ user.id }}/update" hx-target="#detail-pane" hx-swap="innerHTML">
+      <label class="text-xs muted">Role</label>
+      <select name="role" class="input">
+        <option value="client" {% if user.role=='client' %}selected{% endif %}>Client</option>
+        <option value="thirdparty" {% if user.role=='thirdparty' %}selected{% endif %}>Thirdparty</option>
+      </select>
+
+      <div style="display:flex;gap:12px;align-items:center">
+        <label class="muted"><input type="checkbox" name="is_locked" {% if user.is_locked %}checked{% endif %}/> Locked</label>
+        <label class="muted"><input type="checkbox" name="is_healthy" {% if user.is_healthy %}checked{% endif %}/> Healthy</label>
+      </div>
+
+      <div>
+        <label class="text-xs muted">Tags</label>
+        <div class="tag-widget" aria-label="Tags">
+          <div class="tag-chips"></div>
+          <input type="hidden" name="tags" value="{{ user.tags|default('') }}" />
+          <input class="tag-input" type="text" placeholder="Add tag and press Enter" />
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px">
+        <button class="btn-primary" type="submit">Update</button>
+        <button hx-post="/ui/user/{{ user.id }}/delete" hx-target="#detail-pane" hx-swap="innerHTML" class="btn-destructive" type="button">Delete</button>
+      </div>
+
+      <div class="muted text-sm">
+        <div>Tenant: {{ user.tenant or '—' }}</div>
+        <div>Domain: {{ user.domain or '—' }}</div>
+      </div>
+    </form>
+  </div>
+</div>

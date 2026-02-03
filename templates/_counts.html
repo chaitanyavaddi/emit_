@@ -1,0 +1,25 @@
+<div id="counts" hx-swap-oob="outerHTML" aria-live="polite">
+  <div class="count-card">
+    <div class="count-icon">📦</div>
+    <div>
+      <div class="count-label">Total</div>
+      <div class="count-number">{{ counts.total }}</div>
+    </div>
+  </div>
+
+  <div class="count-card">
+    <div class="count-icon">🔒</div>
+    <div>
+      <div class="count-label">Busy</div>
+      <div class="count-number">{{ counts.busy }}</div>
+    </div>
+  </div>
+
+  <div class="count-card">
+    <div class="count-icon">✅</div>
+    <div>
+      <div class="count-label">Free</div>
+      <div class="count-number">{{ counts.free }}</div>
+    </div>
+  </div>
+</div>

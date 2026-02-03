@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="app-grid">
+  <!-- LEFT NAV -->
+  <aside class="left-nav">
+    <div class="glass-card logo">
+      <div class="logo-emit">E</div>
+      <div>
+        <div style="font-weight:700">Emit</div>
+        <div style="font-size:12px;color:var(--muted)">Test User Pool</div>
+      </div>
+    </div>
+
+    <div class="glass-card nav-list">
+      <div class="nav-item active" role="button" tabindex="0" hx-get="/ui/users" hx-target="#users-container" hx-swap="innerHTML">Test Data</div>
+      <div class="nav-item" role="button" tabindex="0" hx-get="/ui/settings" hx-target="#users-container" hx-swap="innerHTML">Settings</div>
+
+      <div style="margin-top:12px">
+        <button id="refresh-btn" hx-get="/ui/refresh" hx-target="#users-container" hx-swap="innerHTML" class="tab-btn" title="Refresh" aria-label="Refresh users and counts">Refresh</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- CENTER -->
+  <div class="center-col">
+    <div class="counts-row" id="counts-row">
+      {% include '_counts.html' %}
+    </div>
+
+    <div class="glass-panel glass-card table-wrap" id="users-container">
+      {% include '_users_table.html' %}
+    </div>
+  </div>
+
+  <!-- RIGHT -->
+  <aside class="right-col">
+    <div class="glass-card profile-card" id="detail-pane">
+      <div class="profile-header" style="border-radius:8px 8px 0 0;">
+        <div style="display:flex;gap:12px;align-items:center">
+          <div class="avatar">E</div>
+          <div>
+            <div class="muted">Details</div>
+            <div class="text-sm muted">Select a user to view</div>
+          </div>
+        </div>
+      </div>
+      <div class="profile-body">
+        <div class="muted">No user selected</div>
+      </div>
+    </div>
+  </aside>
+</div>
+{% endblock %}

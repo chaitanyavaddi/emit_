@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ settings.app_name if settings else 'Emit UI' }}</title>
+
+    <!-- Plus Jakarta Sans for a modern geometric look -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.2"></script>
+
+    <style>
+      /* Plus Jakarta Sans & design tokens */
+      @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap');
+      :root{
+        --bg: linear-gradient(180deg,#fbfcff 0%, #f7f9fc 100%);
+        --surface: rgba(255,255,255,0.6);
+        --muted: #6b7280;
+        --muted-2: #475569;
+        --indigo: #4f46e5;
+        --cyan: #06b6d4;
+        --accent-grad: linear-gradient(90deg,var(--indigo),var(--cyan));
+        --glass-border: rgba(255,255,255,0.6);
+        --glass-bg: rgba(255,255,255,0.35);
+        --radius: 12px;
+        --gap: 16px;
+        --transition: 180ms cubic-bezier(.2,.8,.2,1);
+      }
+
+      html,body{ height:100%; }
+      body{ margin:0; font-family: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; background: var(--bg); color: #071133; -webkit-font-smoothing:antialiased; }
+
+      /* Grid layout - responsive */
+      .app-grid{ display:grid; grid-template-columns: 220px minmax(0,760px) 320px; gap: 28px; align-items:start; padding:28px; max-width:1200px; margin:0 auto; }
+      @media (max-width: 1100px){ .app-grid{ grid-template-columns: 72px 1fr; grid-auto-rows: auto; } .right-col{ display:none; } .left-nav{ width:72px; } }
+
+      /* Glass utilities */
+      .glass-panel{ background:var(--glass-bg); border:1px solid var(--glass-border); backdrop-filter: blur(8px) saturate(120%); border-radius: var(--radius); }
+      .glass-card{ padding:12px; border-radius:var(--radius); background: linear-gradient(180deg, rgba(255,255,255,0.62), rgba(255,255,255,0.5)); box-shadow: 0 6px 18px rgba(16,24,40,0.04); border: 1px solid rgba(255,255,255,0.6); }
+
+      /* Sidebar */
+      .left-nav{ display:flex; flex-direction:column; gap:16px; }
+      .logo{ display:flex; align-items:center; gap:12px; }
+      .logo-emit{ width:42px; height:42px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:700; color: #fff; background: linear-gradient(180deg,var(--indigo),var(--cyan)); box-shadow: 0 6px 16px rgba(79,70,229,0.12); }
+      .nav-list{ display:flex; flex-direction:column; gap:6px; }
+      .nav-item{ padding:10px 12px; border-radius:10px; color:var(--muted); cursor:pointer; font-weight:600; font-size:14px; }
+      .nav-item.active{ color:#071133; box-shadow: 0 6px 18px rgba(79,70,229,0.06); background: linear-gradient(90deg, rgba(79,70,229,0.08), rgba(6,182,212,0.02)); }
+
+      /* Counts: floating glass cards */
+      .counts-row{ display:flex; gap:12px; align-items:center; margin-bottom:12px; }
+      .count-card{ display:flex; gap:12px; align-items:center; padding:12px 14px; min-width:140px; border-radius:12px; background: linear-gradient(180deg, rgba(71,83,255,0.06), rgba(6,182,212,0.03)); color:#071133; box-shadow: 0 8px 22px rgba(16,24,40,0.04); border:1px solid rgba(255,255,255,0.6); }
+      .count-icon{ width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.5); box-shadow: inset 0 -2px 6px rgba(0,0,0,0.03); }
+      .count-number{ font-weight:700; font-size:20px; }
+      .count-label{ font-size:12px; color:var(--muted); }
+
+      /* Table */
+      .table-wrap{ overflow:hidden; }
+      table{ width:100%; border-collapse:collapse; }
+      thead th{ text-align:left; font-size:12px; color:var(--muted); padding:12px 14px; }
+      tbody tr{ transition: background var(--transition), transform var(--transition); }
+      tbody tr:hover{ background: rgba(7,17,51,0.03); transform: translateY(-1px); }
+      td{ padding:12px 14px; font-size:14px; border-top:1px solid rgba(15,23,42,0.03); }
+      .status-badge{ padding:6px 8px; border-radius:999px; font-size:12px; display:inline-block; }
+      .status-active{ background: rgba(34,197,94,0.08); color:#15803d; }
+      .status-inactive{ background: rgba(107,114,128,0.06); color:var(--muted); }
+      .locked{ color:#ef4444; }
+
+      /* Right detail panel (glass profile) */
+      .profile-card{ display:flex; flex-direction:column; gap:10px; }
+      .profile-header{ padding:16px; border-radius:12px 12px 0 0; background: linear-gradient(90deg, rgba(79,70,229,0.08), rgba(6,182,212,0.03)); }
+      .avatar{ width:64px; height:64px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-weight:700; color:#fff; background: linear-gradient(180deg,var(--indigo),var(--cyan)); box-shadow: 0 10px 24px rgba(79,70,229,0.08); }
+      .profile-body{ padding:14px; display:flex; flex-direction:column; gap:12px; }
+      .input{ width:100%; padding:10px 12px; border-radius:10px; border:1px solid rgba(15,23,42,0.06); }
+      .btn-primary{ padding:10px 14px; border-radius:10px; color:#fff; background: linear-gradient(90deg,var(--indigo),var(--cyan)); border:none; }
+      .btn-destructive{ padding:10px 14px; border-radius:10px; background:transparent; color:#ef4444; border:1px solid rgba(239,68,68,0.08); }
+
+      /* Tag widget */
+      .tag-widget{ display:flex; gap:8px; flex-wrap:wrap; padding:8px; background: rgba(255,255,255,0.6); border-radius:10px; border:1px solid rgba(15,23,42,0.03); }
+      .tag-chip{ background: rgba(79,70,229,0.08); color:var(--indigo); padding:6px 8px; border-radius:999px; display:inline-flex; gap:8px; align-items:center; }
+      .tag-chip button{ background:transparent; border:0; color:var(--muted); cursor:pointer; }
+      .tag-input{ min-width:100px; border:0; outline:0; background:transparent; padding:6px; }
+
+      /* Progress tweak */
+      #htmx-progress{ height:3px; background:linear-gradient(90deg,var(--indigo),var(--cyan)); box-shadow:0 6px 20px rgba(79,70,229,0.08); position:fixed; left:0; top:0; width:0; z-index:9999; opacity:0; transition: width 160ms linear, opacity 120ms linear; }
+
+    </style>
+  </head>
+  <body>
+    <div id="htmx-progress" aria-hidden="true"></div>
+    <div id="page-overlay" aria-hidden="true" style="display:none">
+      <div class="glass-card" role="status">
+        <svg class="w-8 h-8 animate-spin" viewBox="0 0 24 24" fill="none" stroke="#4753ff" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" stroke-width="3" stroke-opacity="0.15"></circle><path d="M4 12a8 8 0 018-8v4" stroke="#4753ff" stroke-width="3"></path></svg>
+        <div style="margin-top:8px;color:var(--muted)">Refreshing…</div>
+      </div>
+    </div>
+
+    {% block content %}{% endblock %}
+
+    <script>
+      (function(){
+        // Progress logic - quicker start, smooth finish
+        var progress = document.getElementById('htmx-progress');
+        function showProgress(){ if(!progress) return; progress.style.opacity='1'; progress.style.width='20%'; }
+        function setProgress(p){ if(!progress) return; progress.style.width = p + '%'; }
+        function finishProgress(){ if(!progress) return; progress.style.width='100%'; setTimeout(function(){ progress.style.opacity='0'; progress.style.width='0'; }, 240); }
+
+        document.body.addEventListener('htmx:beforeRequest', function(evt){
+          showProgress();
+          var d = document.getElementById('detail-pane'); if(d) d.classList.add('loading');
+
+          try{
+            var elt = evt && evt.detail && evt.detail.elt;
+            if(elt && elt.id === 'refresh-btn'){
+              document.body.classList.add('page-loading');
+              elt.classList.add('rotating');
+              document.getElementById('page-overlay').style.display='flex';
+            }
+          }catch(e){}
+        });
+
+        document.body.addEventListener('htmx:afterSwap', function(evt){
+          finishProgress();
+          var d = document.getElementById('detail-pane'); if(d) d.classList.remove('loading');
+          var uc = document.getElementById('users-container'); if(uc) uc.classList.remove('loading');
+
+          document.body.classList.remove('page-loading');
+          var btn = document.getElementById('refresh-btn'); if(btn) btn.classList.remove('rotating');
+          document.getElementById('page-overlay').style.display='none';
+
+          // focus first focusable in detail pane
+          try{ var pane=document.getElementById('detail-pane'); if(pane){ var f = pane.querySelector('input,button,select,textarea,a'); if(f) f.focus(); }}catch(e){}
+
+          // re-init tag widgets and other widgets
+          try{ initTagWidgets(); }catch(e){}
+        });
+
+        document.body.addEventListener('htmx:sendError', function(){
+          finishProgress();
+          document.body.classList.remove('page-loading');
+          var btn = document.getElementById('refresh-btn'); if(btn) btn.classList.remove('rotating');
+          document.getElementById('page-overlay').style.display='none';
+        });
+
+        /* Tag widget (modernized) */
+        function initTagWidgets(){
+          document.querySelectorAll('.tag-widget').forEach(function(widget){
+            if(widget.__init) return; widget.__init = true;
+            var input = widget.querySelector('.tag-input');
+            var hidden = widget.querySelector('input[type="hidden"][name="tags"]');
+            var chips = widget.querySelector('.tag-chips');
+
+            function parse(){ return (hidden.value||'').split(',').map(s=>s.trim()).filter(Boolean); }
+            function render(){ chips.innerHTML=''; parse().forEach(function(t){
+              var chip = document.createElement('span'); chip.className='tag-chip'; chip.innerHTML = '<span>'+t+'</span>';
+              var btn = document.createElement('button'); btn.type='button'; btn.innerHTML='✕'; btn.addEventListener('click', function(){ remove(t); }); chip.appendChild(btn); chips.appendChild(chip);
+            });
+            }
+
+            function add(val){ val=(val||'').trim(); if(!val) return; var arr=parse(); if(arr.indexOf(val)!==-1) return; arr.push(val); hidden.value = arr.join(','); render(); input.value=''; }
+            function remove(val){ var arr=parse().filter(v=>v!==val); hidden.value = arr.join(','); render(); }
+
+            input.addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); add(input.value); } if(e.key==='Backspace' && !input.value){ var arr=parse(); if(arr.length) remove(arr[arr.length-1]); } });
+            render();
+          });
+        }
+
+        document.addEventListener('DOMContentLoaded', initTagWidgets);
+
+        // Row and nav selection handling
+        document.addEventListener('click', function(e){
+          var nav = e.target.closest('.nav-item');
+          if(nav){ document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active')); nav.classList.add('active'); }
+
+          var row = e.target.closest('tr[id^="row-"]');
+          if(row){ document.querySelectorAll('tr.selected').forEach(r=>r.classList.remove('selected')); row.classList.add('selected'); }
+        });
+
+        // keyboard navigation for nav items
+        document.addEventListener('keydown', function(e){
+          var active = document.querySelector('.nav-item.active');
+          if(!active) return;
+          if(e.key === 'ArrowDown' || e.key === 'j'){
+            var next = active.nextElementSibling; if(next && next.classList.contains('nav-item')){ next.focus(); }}
+        });
+      })();
+    </script>
+  </body>
+</html>

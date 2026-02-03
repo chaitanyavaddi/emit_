@@ -1,0 +1,22 @@
+# Ignore artifacts
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+*.db
+.env
+.env.*
+.venv
+venv
+.env
+.pytest_cache
+.coverage
+build
+dist
+*.egg-info
+.git
+.gitignore
+Dockerfile
+docker-compose*.yml
+node_modules
