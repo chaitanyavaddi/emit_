@@ -3,43 +3,90 @@
     <div style="display:flex;align-items:center;gap:12px">
       <div class="avatar">{{ user.email[0]|upper }}</div>
       <div>
-        <div style="font-weight:700">{{ user.email }}</div>
-        <div class="muted">ID: {{ user.id }}</div>
+        <div style="font-weight:600;font-size:14px;margin-bottom:2px">{{ user.email }}</div>
+        <div class="text-xs muted">ID: {{ user.id }}</div>
       </div>
     </div>
   </div>
 
   <div class="profile-body">
     <form hx-post="/ui/user/{{ user.id }}/update" hx-target="#detail-pane" hx-swap="innerHTML">
-      <label class="text-xs muted">Role</label>
-      <select name="role" class="input">
-        <option value="client" {% if user.role=='client' %}selected{% endif %}>Client</option>
-        <option value="thirdparty" {% if user.role=='thirdparty' %}selected{% endif %}>Thirdparty</option>
-      </select>
-
-      <div style="display:flex;gap:12px;align-items:center">
-        <label class="muted"><input type="checkbox" name="is_locked" {% if user.is_locked %}checked{% endif %}/> Locked</label>
-        <label class="muted"><input type="checkbox" name="is_healthy" {% if user.is_healthy %}checked{% endif %}/> Healthy</label>
-      </div>
-
-      <div>
-        <label class="text-xs muted">Tags</label>
-        <div class="tag-widget" aria-label="Tags">
-          <div class="tag-chips"></div>
-          <input type="hidden" name="tags" value="{{ user.tags|default('') }}" />
-          <input class="tag-input" type="text" placeholder="Add tag and press Enter" />
+      <div class="form-group">
+        <label>Role</label>
+        <div class="select-wrapper">
+          <button type="button" class="select-trigger">
+            <span class="select-value">{% if user.role == 'client' %}Client{% else %}Thirdparty{% endif %}</span>
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+          </button>
+          <div class="select-content">
+            <div class="select-item {% if user.role == 'client' %}selected{% endif %}" data-value="client">Client</div>
+            <div class="select-item {% if user.role == 'thirdparty' %}selected{% endif %}" data-value="thirdparty">Thirdparty</div>
+          </div>
+          <input type="hidden" name="role" value="{{ user.role }}" />
         </div>
       </div>
 
-      <div style="display:flex;gap:10px">
-        <button class="btn-primary" type="submit">Update</button>
-        <button hx-post="/ui/user/{{ user.id }}/delete" hx-target="#detail-pane" hx-swap="innerHTML" class="btn-destructive" type="button">Delete</button>
+      <div style="display:flex;gap:16px;align-items:center">
+        <label style="display:flex;align-items:center;cursor:pointer">
+          <input type="checkbox" name="is_locked" {% if user.is_locked %}checked{% endif %}/> 
+          Locked
+        </label>
+        <label style="display:flex;align-items:center;cursor:pointer">
+          <input type="checkbox" name="is_healthy" {% if user.is_healthy %}checked{% endif %}/> 
+          Healthy
+        </label>
       </div>
 
-      <div class="muted text-sm">
-        <div>Tenant: {{ user.tenant or '—' }}</div>
-        <div>Domain: {{ user.domain or '—' }}</div>
+      <div class="form-group">
+        <label>Tags</label>
+        <div class="tag-widget" aria-label="Tags">
+          <div class="tag-chips"></div>
+          <input type="hidden" name="tags" value="{{ user.tags|default('') }}" />
+          <input class="tag-input" type="text" placeholder="Add tag..." />
+        </div>
+      </div>
+
+      <div class="button-group">
+        <button class="btn btn-primary" type="submit">
+          <svg style="width:14px;height:14px" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+          </svg>
+          Update
+        </button>
+        <button hx-post="/ui/user/{{ user.id }}/delete" hx-target="#detail-pane" hx-swap="innerHTML" class="btn btn-destructive" type="button">
+          <svg style="width:14px;height:14px" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+          </svg>
+          Delete
+        </button>
+      </div>
+
+      <div class="info-section">
+        <div class="info-row">
+          <span class="info-label">Tenant</span>
+          <span class="info-value">{{ user.tenant or '—' }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Domain</span>
+          <span class="info-value">{{ user.domain or '—' }}</span>
+        </div>
       </div>
     </form>
   </div>
 </div>
+
+<script>
+// Show success message after form submission
+htmx.on('htmx:afterSwap', function(evt) {
+  if (evt.detail.target.id === 'detail-pane') {
+    var trigger = evt.detail.requestConfig.elt;
+    if (trigger && trigger.type === 'submit') {
+      window.showToast('User updated successfully', 'success');
+    } else if (trigger && trigger.textContent.includes('Delete')) {
+      window.showToast('User deleted successfully', 'success');
+    }
+  }
+});
+</script>
