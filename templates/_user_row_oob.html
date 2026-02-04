@@ -1,0 +1,7 @@
+<tr id="row-{{ user.id }}" hx-swap-oob="outerHTML" tabindex="0" role="button" aria-label="View user {{ user.email }}" onkeydown="if(event.key==='Enter'||event.key===' '){ this.dispatchEvent(new MouseEvent('click',{bubbles:true})); }" hx-get="/ui/user/{{ user.id }}" hx-target="#detail-pane" hx-swap="innerHTML">
+  <td>{{ user.id }}</td>
+  <td class="truncate">{{ user.email }}</td>
+  <td><span class="status-badge">{{ user.role }}</span></td>
+  <td>{% if user.is_healthy %}<span class="status-badge status-active">Active</span>{% else %}<span class="status-badge status-inactive">Inactive</span>{% endif %}</td>
+  <td>{% if user.is_locked %}<span class="locked">Yes</span>{% else %}<span class="muted">No</span>{% endif %}</td>
+</tr>

@@ -227,6 +227,7 @@
 
       .btn-primary:hover:not(:disabled) {
         background: hsl(var(--primary) / 0.9);
+        color: hsl(var(--primary-foreground));
       }
 
       .btn-primary.loading::after {
@@ -909,21 +910,38 @@
 
     <script>
       (function(){
-        var detailPane = document.getElementById('detail-pane');
-        
-        // Show loading spinner in detail pane on row click
+        // Helper to always get the current detail pane element (handles replacements)
+        function getDetailPane() { return document.getElementById('detail-pane'); }
+
+        // Show loading spinner in detail pane on row click or when submitting forms in the detail pane
         document.addEventListener('htmx:beforeRequest', function(evt) {
           var trigger = evt.detail.elt;
-          
-          // Check if it's a row click or form submission
-          if (trigger && trigger.closest('tr[id^="row-"]')) {
-            // Show loading in detail pane
-            if (detailPane) {
+          var detailPane = getDetailPane();
+
+          // determine if request relates to detail pane -- row click or a form submit inside the detail pane
+          var isRow = trigger && trigger.closest && trigger.closest('tr[id^="row-"]');
+          var isSubmitButton = trigger && trigger.tagName === 'BUTTON' && trigger.type === 'submit';
+          var isInsideForm = trigger && trigger.closest && trigger.closest('form');
+
+          if ((isRow || isSubmitButton || isInsideForm) && detailPane) {
+            if (!document.getElementById('detail-loading-spinner')) {
               var loading = document.createElement('div');
               loading.className = 'detail-loading';
               loading.id = 'detail-loading-spinner';
               loading.innerHTML = '<div class="spinner"></div>';
               detailPane.appendChild(loading);
+              // also add a loading state class so CSS-based overlays are consistent
+              detailPane.classList.add('loading');
+
+              // safety timeout in case something prevents the normal cleanup
+              if (detailPane.__loadingTimeout) clearTimeout(detailPane.__loadingTimeout);
+              detailPane.__loadingTimeout = setTimeout(function() {
+                var sp = document.getElementById('detail-loading-spinner');
+                if (sp) sp.remove();
+                var dp = getDetailPane();
+                if (dp && dp.classList) dp.classList.remove('loading');
+                if (dp && dp.__loadingTimeout) { clearTimeout(dp.__loadingTimeout); delete dp.__loadingTimeout; }
+              }, 12000);
             }
           }
 
@@ -935,12 +953,17 @@
           }
         });
 
-        document.addEventListener('htmx:afterSwap', function(evt) {
-          // Remove loading spinner
+        function clearDetailLoading() {
           var spinner = document.getElementById('detail-loading-spinner');
-          if (spinner) {
-            spinner.remove();
-          }
+          if (spinner) spinner.remove();
+          var detailPane = getDetailPane();
+          if (detailPane && detailPane.classList) detailPane.classList.remove('loading');
+          if (detailPane && detailPane.__loadingTimeout) { clearTimeout(detailPane.__loadingTimeout); delete detailPane.__loadingTimeout; }
+        }
+
+        document.addEventListener('htmx:afterSwap', function(evt) {
+          // Remove loading spinner and loading class
+          clearDetailLoading();
 
           // Re-enable buttons and remove loading state
           document.querySelectorAll('button.loading').forEach(function(btn) {
@@ -953,11 +976,13 @@
           initTagWidgets();
         });
 
+        // Also clear on the generic afterRequest (fallback) and on errors
+        document.addEventListener('htmx:afterRequest', function() {
+          clearDetailLoading();
+        });
+
         document.addEventListener('htmx:sendError', function() {
-          var spinner = document.getElementById('detail-loading-spinner');
-          if (spinner) {
-            spinner.remove();
-          }
+          clearDetailLoading();
 
           document.querySelectorAll('button.loading').forEach(function(btn) {
             btn.disabled = false;

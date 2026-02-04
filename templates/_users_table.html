@@ -14,13 +14,8 @@
   </thead>
   <tbody>
     {% for u in users %}
-      <tr id="row-{{ u.id }}" tabindex="0" role="button" aria-label="View user {{ u.email }}" onkeydown="if(event.key==='Enter'||event.key===' '){ this.dispatchEvent(new MouseEvent('click',{bubbles:true})); }" hx-get="/ui/user/{{ u.id }}" hx-target="#detail-pane" hx-swap="innerHTML">
-        <td>{{ u.id }}</td>
-        <td class="truncate">{{ u.email }}</td>
-        <td><span class="status-badge">{{ u.role }}</span></td>
-        <td>{% if u.is_healthy %}<span class="status-badge status-active">Active</span>{% else %}<span class="status-badge status-inactive">Inactive</span>{% endif %}</td>
-        <td>{% if u.is_locked %}<span class="locked">Yes</span>{% else %}<span class="muted">No</span>{% endif %}</td>
-      </tr>
+      {% set user = u %}
+      {% include '_user_row.html' %}
     {% else %}
       <tr>
         <td colspan="5" class="muted">No users available</td>

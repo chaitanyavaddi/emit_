@@ -56,7 +56,15 @@ def user_detail(request: Request, user_id: int, session: Session = Depends(get_d
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     user_data = CertaUserResponse.model_validate(user).model_dump()
-    return templates.TemplateResponse("_detail_pane.html", {"request": request, "user": user_data})
+
+    total = session.query(CertaUser).count()
+    busy = session.query(CertaUser).filter(CertaUser.is_locked == True).count()
+    free = total - busy
+
+    return templates.TemplateResponse(
+        "_detail_and_counts.html",
+        {"request": request, "user": user_data, "counts": {"total": total, "busy": busy, "free": free}},
+    )
 
 
 @router.post("/ui/user/{user_id}/update", response_class=HTMLResponse)
@@ -90,7 +98,7 @@ async def user_update(request: Request, user_id: int, session: Session = Depends
 
     user_data = CertaUserResponse.model_validate(updated).model_dump()
     return templates.TemplateResponse(
-        "_detail_and_counts.html",
+        "_detail_and_counts_and_row.html",
         {"request": request, "user": user_data, "counts": {"total": total, "busy": busy, "free": free}},
     )
 

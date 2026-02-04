@@ -9,6 +9,34 @@
     </div>
   </div>
 
+  <div class="info-section">
+        <div class="info-row">
+          <span class="info-label">Tenant</span>
+          <span class="info-value">{{ user.tenant or '—' }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Domain</span>
+          <span class="info-value">{{ user.domain or '—' }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Role</span>
+          <span class="info-value">{{ user.role or '—' }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Password</span>
+          <span class="info-value">{{ user.password or '—' }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Locked At</span>
+          <span class="info-value">{{ user.locked_at.strftime("%Y-%m-%d %H:%M:%S") if user.locked_at else '-' }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Locked By</span>
+          <span class="info-value">{{ user.locked_by or '-' }}</span>
+        </div>
+        
+      </div>
+
   <div class="profile-body">
     <form hx-post="/ui/user/{{ user.id }}/update" hx-target="#detail-pane" hx-swap="innerHTML">
       <div class="form-group">
@@ -28,6 +56,17 @@
         </div>
       </div>
 
+      
+
+      <div class="form-group">
+        <label>Tags</label>
+        <div class="tag-widget" aria-label="Tags">
+          <div class="tag-chips"></div>
+          <input type="hidden" name="tags" value="{{ user.tags|default('') }}" />
+          <input class="tag-input" type="text" placeholder="Add tag..." />
+        </div>
+      </div>
+
       <div style="display:flex;gap:16px;align-items:center">
         <label style="display:flex;align-items:center;cursor:pointer">
           <input type="checkbox" name="is_locked" {% if user.is_locked %}checked{% endif %}/> 
@@ -37,15 +76,6 @@
           <input type="checkbox" name="is_healthy" {% if user.is_healthy %}checked{% endif %}/> 
           Healthy
         </label>
-      </div>
-
-      <div class="form-group">
-        <label>Tags</label>
-        <div class="tag-widget" aria-label="Tags">
-          <div class="tag-chips"></div>
-          <input type="hidden" name="tags" value="{{ user.tags|default('') }}" />
-          <input class="tag-input" type="text" placeholder="Add tag..." />
-        </div>
       </div>
 
       <div class="button-group">
@@ -63,34 +93,42 @@
         </button>
       </div>
 
-      <div class="info-section">
-        <div class="info-row">
-          <span class="info-label">Tenant</span>
-          <span class="info-value">{{ user.tenant or '—' }}</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">Domain</span>
-          <span class="info-value">{{ user.domain or '—' }}</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">Password</span>
-          <span class="info-value">{{ user.password or '—' }}</span>
-        </div>
-      </div>
+      
     </form>
   </div>
 </div>
 
 <script>
-// Show success message after form submission
+// Show success message after form submission — robustly detect update vs delete via request path
 htmx.on('htmx:afterSwap', function(evt) {
-  if (evt.detail.target.id === 'detail-pane') {
-    var trigger = evt.detail.requestConfig.elt;
+  try {
+    if (!evt.detail || !evt.detail.target || evt.detail.target.id !== 'detail-pane') return;
+
+    var req = evt.detail.requestConfig || {};
+    var path = (req.path || '').toString();
+    var method = (req.verb || req.method || '').toString();
+
+    // Prefer explicit request path checks
+    if (path.includes('/delete')) {
+      window.showToast('User deleted successfully', 'success');
+      return;
+    }
+
+    if (path.includes('/update')) {
+      window.showToast('User updated successfully', 'success');
+      return;
+    }
+
+    // Fallback checks using element context
+    var trigger = req.elt;
     if (trigger && trigger.type === 'submit') {
       window.showToast('User updated successfully', 'success');
-    } else if (trigger && trigger.textContent.includes('Delete')) {
+    } else if (trigger && /delete/i.test(trigger.textContent || '')) {
       window.showToast('User deleted successfully', 'success');
     }
+  } catch (e) {
+    // avoid breaking UI for unexpected structures
+    console.debug('toast detection error', e);
   }
 });
 </script>

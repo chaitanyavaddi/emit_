@@ -31,6 +31,7 @@ class CertaUserResponse(CertaUserBase):
     id: int
     is_locked: bool
     is_healthy: bool
+    role: str
     password: str
     locked_by: Optional[str] = None
     locked_at: Optional[datetime] = None

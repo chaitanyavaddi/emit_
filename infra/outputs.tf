@@ -18,4 +18,4 @@ output "rds_endpoint" {
 #   --region us-east-1
 
 # Manual Deployment - Connect via SSM
-# aws ssm start-session --target 0a5611e7f75b9c216 --region us-east-1
+# aws ssm start-session --target i-0a5611e7f75b9c216 --region us-east-1
