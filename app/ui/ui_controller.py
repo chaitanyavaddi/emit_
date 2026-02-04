@@ -91,15 +91,18 @@ async def user_update(request: Request, user_id: int, session: Session = Depends
     updated = repo.update(user)
     repo.commit()
 
-    # recompute counts
+    # recompute counts and fresh users list
     total = session.query(CertaUser).count()
     busy = session.query(CertaUser).filter(CertaUser.is_locked == True).count()
     free = total - busy
 
+    users = session.query(CertaUser).order_by(CertaUser.id).limit(500).all()
+    users_data = [CertaUserResponse.model_validate(u).model_dump() for u in users]
+
     user_data = CertaUserResponse.model_validate(updated).model_dump()
     return templates.TemplateResponse(
-        "_detail_and_counts_and_row.html",
-        {"request": request, "user": user_data, "counts": {"total": total, "busy": busy, "free": free}},
+        "_detail_and_counts_and_users.html",
+        {"request": request, "user": user_data, "users": users_data, "counts": {"total": total, "busy": busy, "free": free}},
     )
 
 
@@ -121,13 +124,16 @@ def user_delete(request: Request, user_id: int, session: Session = Depends(get_d
     repo.delete(user)
     repo.commit()
 
-    # recompute counts
+    # recompute counts and fresh users list
     total = session.query(CertaUser).count()
     busy = session.query(CertaUser).filter(CertaUser.is_locked == True).count()
     free = total - busy
 
-    # Use out-of-band swaps to remove the row, clear detail pane, and update counts
+    users = session.query(CertaUser).order_by(CertaUser.id).limit(500).all()
+    users_data = [CertaUserResponse.model_validate(u).model_dump() for u in users]
+
+    # Return the cleared detail pane plus a fresh users table and counts (full swap via OOB on users-container)
     return templates.TemplateResponse(
-        "_delete_success_oob.html",
-        {"request": request, "user": {"id": user_id}, "counts": {"total": total, "busy": busy, "free": free}},
+        "_detail_and_counts_and_users.html",
+        {"request": request, "user": {}, "users": users_data, "counts": {"total": total, "busy": busy, "free": free}},
     )
