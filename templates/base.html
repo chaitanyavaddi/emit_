@@ -777,6 +777,16 @@
         border-width: 2px;
       }
 
+      /* Highlight animation for updated rows */
+      @keyframes rowUpdated {
+        0% { background-color: hsl(var(--primary) / 0.15); }
+        100% { background-color: transparent; }
+      }
+
+      .row-updated {
+        animation: rowUpdated 1.5s ease-in-out forwards;
+      }
+
       /* Success/Error toast messages */
       .toast {
         position: fixed;
@@ -974,6 +984,72 @@
           // Initialize custom selects
           initCustomSelects();
           initTagWidgets();
+
+          try {
+            // Debug: log if response included OOB updates
+            var req = (evt.detail && evt.detail.requestConfig) ? evt.detail.requestConfig : {};
+            var path = (req.path || req.verb || '').toString();
+            if (path && (path.indexOf('/update') !== -1 || path.indexOf('/delete') !== -1)) {
+              console.debug('[HTMX] afterSwap for update/delete, checking OOB elements and triggering refresh');
+
+              // Trigger the refresh button so behavior matches manual refresh action
+              var refreshBtn = document.getElementById('refresh-btn');
+              if (refreshBtn) {
+                console.debug('[HTMX] triggering refresh button after update/delete');
+                htmx.trigger(refreshBtn, 'click');
+              }
+
+              // Attempt to verify the row was swapped; if not, refresh the users list as fallback
+              var detailPane = getDetailPane();
+              var userId = detailPane && detailPane.dataset ? detailPane.dataset.userId : null;
+
+              if (userId) {
+                var rowEl = document.getElementById('row-' + userId);
+                // Check locked state from detail pane checkbox
+                var lockedCheckbox = detailPane.querySelector('input[name="is_locked"]');
+                var expectedLocked = lockedCheckbox ? !!lockedCheckbox.checked : null;
+
+                if (!rowEl) {
+                  console.debug('[HTMX] row not found for user', userId, '- reloading users list');
+                  var reloadBtn = document.querySelector('.nav-item.active');
+                  if (reloadBtn) htmx.trigger(reloadBtn, 'click');
+                } else if (expectedLocked !== null) {
+                  var rowLocked = rowEl.querySelectorAll('td')[4] && rowEl.querySelectorAll('td')[4].textContent.trim();
+                  var rowLockedBool = (rowLocked && /yes/i.test(rowLocked));
+                  if (rowLockedBool !== expectedLocked) {
+                    console.debug('[HTMX] row lock state mismatch for user', userId, '- reloading users list');
+                    var reloadBtn = document.querySelector('.nav-item.active');
+                    if (reloadBtn) htmx.trigger(reloadBtn, 'click');
+                  }
+                }
+              }
+            }
+          } catch (e) {
+            console.debug('afterSwap debug error', e);
+          }
+        });
+
+        // Listen for OOB swaps and highlight updated elements (visual confirmation)
+        document.addEventListener('htmx:oobAfterSwap', function(evt) {
+          try {
+            var swappedEl = evt.detail && evt.detail.target;
+            if (!swappedEl) return;
+
+            console.debug('[HTMX] OOB swapped element:', swappedEl.tagName, swappedEl.id || swappedEl.className);
+
+            // If a table row was replaced, animate it to indicate update
+            if (swappedEl.id && swappedEl.id.indexOf('row-') === 0) {
+              swappedEl.classList.add('row-updated');
+              setTimeout(function() { swappedEl.classList.remove('row-updated'); }, 1800);
+            }
+          } catch (e) {
+            console.debug('oobAfterSwap debug error', e);
+          }
+        });
+
+        // Fallback: log when OOB swaps are requested but not applied
+        document.addEventListener('htmx:oobSwap', function(evt) {
+          console.debug('[HTMX] oobSwap event fired:', evt.detail || evt);
         });
 
         // Also clear on the generic afterRequest (fallback) and on errors
