@@ -177,7 +177,7 @@ def get_pool_status(session: Session = Depends(get_db_session)):
     locked_users = session.query(func.count(CertaUser.id)).filter(CertaUser.is_locked == True).scalar()
     unhealthy_users = session.query(func.count(CertaUser.id)).filter(CertaUser.is_healthy == False).scalar()
     
-    from app.models.test_execution import TestExecution, TestExecutionStatus
+    from src.executions.execution_models  import TestExecution, TestExecutionStatus
     active_executions = session.query(func.count(TestExecution.id)).filter(
         TestExecution.status.in_([TestExecutionStatus.ACQUIRING, TestExecutionStatus.RUNNING])
     ).scalar()

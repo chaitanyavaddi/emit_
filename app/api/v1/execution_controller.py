@@ -61,8 +61,8 @@ def get_execution(
         )
     
     # Get assigned users
-    from app.models.user import User
-    assigned_users = session.query(User).filter(User.locked_by == execution_id).all()
+    from src.users.user_models import CertaUser
+    assigned_users = session.query(CertaUser).filter(CertaUser.locked_by == execution_id).all()
     
     response = TestExecutionDetail.model_validate(execution)
     response.assigned_users = [CertaUserResponse.model_validate(u) for u in assigned_users]
@@ -125,9 +125,8 @@ def delete_execution(
             detail=f"Execution with id {execution_id} not found"
         )
     
-    # Check if users are still locked
-    from app.models.user import User
-    locked_users = session.query(User).filter(User.locked_by == execution_id).count()
+    from src.users.user_models import CertaUser
+    locked_users = session.query(CertaUser).filter(CertaUser.locked_by == execution_id).count()
     
     if locked_users > 0 and not force:
         raise HTTPException(
