@@ -27,11 +27,15 @@
           <span class="info-value">{{ user.password or '—' }}</span>
         </div>
         <div class="info-row">
-          <span class="info-label">Locked At</span>
+          <span class="info-label">Is Locked</span>
+          <span class="info-value">{%if user.is_locked%}Yes{%else%}No{%endif%}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Last Locked At</span>
           <span class="info-value">{{ user.locked_at.strftime("%Y-%m-%d %H:%M:%S") if user.locked_at else '-' }}</span>
         </div>
         <div class="info-row">
-          <span class="info-label">Locked By</span>
+          <span class="info-label">Last Locked By</span>
           <span class="info-value">{{ user.locked_by or '-' }}</span>
         </div>
         
